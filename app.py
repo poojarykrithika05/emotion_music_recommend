@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, f
 import base64
 import numpy as np
 import cv2
+import os
 from camera import predict_emotion_from_image, music_rec
 
 # AUTH
@@ -12,7 +13,11 @@ from flask_bcrypt import Bcrypt
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+# ✅ FIXED DATABASE PATH FOR PRODUCTION
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'users.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -28,7 +33,7 @@ class User(db.Model, UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))  # Fixed
+    return db.session.get(User, int(user_id))
 
 # ---------------- INITIAL SONGS ----------------
 df1 = music_rec()
@@ -131,10 +136,10 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+# ✅ CREATE DATABASE AUTOMATICALLY (IMPORTANT FOR RENDER)
+with app.app_context():
+    db.create_all()
+
 # ---------------- MAIN ----------------
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run()
-   
-    
