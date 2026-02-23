@@ -15,8 +15,11 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 
 # ✅ FIXED DATABASE PATH FOR PRODUCTION
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'users.db')
+if os.environ.get("RENDER"):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/users.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
